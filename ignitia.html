@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ignitia</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23141517'/%3E%3Cpath fill='%23ff4f1f' d='M16 4c1.2 5.2 8 7.4 8 13.5a8 8 0 0 1-16 0c0-3 1.6-5.4 3.2-6.8.2 2.8 1.6 4.3 3.2 4.6C14.6 11.6 14 8 16 4z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Unbounded:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --chassis: #dedfdb;
+    --panel: #eeeeeb;
+    --ink: #141517;
+    --muted: #565952;
+    --line: #c3c5bf;
+    --finder: #0a0a0a;
+    --spark: #ff4f1f;
+    --spark-soft: #ffd9cc;
+    --display: 'Unbounded', 'Avenir Next', 'Segoe UI', system-ui, sans-serif;
+    --body: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--chassis);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, select, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: not-allowed; }
+
+  :focus-visible { outline: 3px solid var(--spark); outline-offset: 3px; }
+
+  /* ---------- Header ---------- */
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 20px 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand svg { width: 30px; height: 30px; flex: none; }
+  .brand span {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+  }
+
+  .top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .tabs {
+    display: inline-flex;
+    background: var(--ink);
+    border-radius: 999px;
+    padding: 4px;
+    gap: 2px;
+  }
+  .tab {
+    border: 0;
+    background: transparent;
+    color: #d8d9d4;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tab[aria-selected="true"] { background: var(--chassis); color: var(--ink); }
+  .tab:focus-visible { outline-offset: 1px; }
+  .badge {
+    min-width: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--spark);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 22px;
+    text-align: center;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--ink);
+    background: transparent;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color .15s, color .15s;
+  }
+  .btn svg { width: 18px; height: 18px; flex: none; }
+  .btn:hover:not(:disabled) { background: var(--ink); color: var(--chassis); }
+  .btn.primary { background: var(--spark); }
+  .btn.primary:hover:not(:disabled) { background: var(--ink); color: var(--spark); }
+  .btn.danger:hover:not(:disabled) { background: #b3210b; border-color: #b3210b; color: #fff; }
+  .btn:disabled { opacity: .45; }
+
+  /* ---------- Layout ---------- */
+  main { max-width: 1100px; margin: 0 auto; padding: 8px 20px 48px; }
+
+  /* ---------- Viewfinder ---------- */
+  .stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: min(72vh, 760px);
+    background: var(--finder);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 0 6px var(--ink), 0 24px 50px -24px rgba(20, 21, 23, .55);
+  }
+  .stage video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: var(--finder);
+  }
+  .stage video.mirrored { transform: scaleX(-1); }
+
+  .bracket {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border: 0 solid rgba(255, 255, 255, .8);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .bracket.tl { top: 16px; left: 16px; border-top-width: 2px; border-left-width: 2px; }
+  .bracket.tr { top: 16px; right: 16px; border-top-width: 2px; border-right-width: 2px; }
+  .bracket.bl { bottom: 16px; left: 16px; border-bottom-width: 2px; border-left-width: 2px; }
+  .bracket.br { bottom: 16px; right: 16px; border-bottom-width: 2px; border-right-width: 2px; }
+
+  .readout {
+    position: absolute;
+    top: 22px;
+    left: 54px;
+    z-index: 2;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: .02em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .7);
+    pointer-events: none;
+  }
+
+  .placeholder {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 24px 40px;
+    text-align: center;
+    color: #e9eae6;
+  }
+  .placeholder p { margin: 0; max-width: 46ch; color: #c9cac5; }
+  .placeholder p.error { color: #ffb4a0; }
+  .placeholder .btn { border-color: #fff; color: #fff; }
+  .placeholder .btn.primary { border-color: var(--spark); color: var(--ink); }
+  .placeholder .btn.primary:hover:not(:disabled) { background: #fff; border-color: #fff; color: var(--ink); }
+
+  .countdown {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(96px, 22vw, 220px);
+    color: #fff;
+    text-shadow: 0 4px 30px rgba(0, 0, 0, .55);
+    pointer-events: none;
+  }
+  .countdown.pop { animation: pop .9s ease-out; }
+  @keyframes pop {
+    0% { transform: scale(1.35); opacity: 0; }
+    25% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(.92); opacity: .85; }
+  }
+
+  .flash {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .flash.fire { animation: flash .35s ease-out; }
+  @keyframes flash {
+    0% { opacity: .95; }
+    100% { opacity: 0; }
+  }
+
+  /* ---------- Controls ---------- */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    margin: 28px 0 22px;
+  }
+  .controls .left { justify-self: start; }
+  .controls .right { justify-self: end; }
+
+  .shutter {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: 5px solid var(--ink);
+    background: var(--chassis);
+    padding: 5px;
+    display: grid;
+    place-items: center;
+    transition: transform .1s;
+  }
+  .shutter::after {
+    content: '';
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--spark);
+    transition: border-radius .15s, transform .15s;
+  }
+  .shutter:hover:not(:disabled)::after { transform: scale(.94); }
+  .shutter:active:not(:disabled) { transform: scale(.95); }
+  .shutter:disabled { opacity: .35; }
+  .shutter.counting::after { border-radius: 14px; transform: scale(.55); }
+
+  .last-shot {
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--panel);
+  }
+  .last-shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+  /* ---------- Options ---------- */
+  .options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+    align-items: center;
+    padding: 16px 18px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+  }
+  .field { display: inline-flex; align-items: center; gap: 10px; font-weight: 500; }
+  .field select {
+    background: var(--chassis);
+    border: 1.5px solid var(--ink);
+    border-radius: 10px;
+    padding: 7px 10px;
+    max-width: 240px;
+  }
+  .field input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--spark); }
+  .field.check { cursor: pointer; }
+  .hint { flex-basis: 100%; margin: 0; font-size: 14px; color: var(--muted); }
+
+  /* ---------- Gallery ---------- */
+  .gallery-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 12px 0 18px;
+  }
+  .gallery-head h1 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+  }
+  .gallery-head .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+  }
+  .thumb {
+    position: relative;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--panel);
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .25s; }
+  .thumb:hover img { transform: scale(1.04); }
+  .thumb .tag {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .thumb.broken { display: grid; place-items: center; color: var(--muted); font-size: 14px; padding: 12px; text-align: center; }
+
+  .empty {
+    text-align: left;
+    padding: 56px 24px;
+    border: 2px dashed var(--line);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .empty h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 20px; letter-spacing: -0.02em; }
+  .empty p { margin: 0; color: var(--muted); max-width: 52ch; }
+  .empty .row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ---------- Lightbox ---------- */
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    background: rgba(10, 10, 10, .95);
+    color: #f1f1ee;
+  }
+  .lb-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 18px;
+  }
+  .lb-meta { min-width: 0; }
+  .lb-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-sub { font-size: 14px; color: #b8b9b4; }
+  .lb-stage {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+  }
+  .lb-stage img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
+  .lb-foot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 18px 20px;
+  }
+  .lightbox .btn { border-color: #f1f1ee; color: #f1f1ee; }
+  .lightbox .btn:hover:not(:disabled) { background: #f1f1ee; color: var(--ink); }
+  .lightbox .btn.danger:hover:not(:disabled) { background: #ff6b4d; border-color: #ff6b4d; color: var(--ink); }
+
+  /* ---------- Drop overlay + toast ---------- */
+  .drop {
+    position: fixed;
+    inset: 12px;
+    z-index: 60;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 3px dashed var(--spark);
+    border-radius: 18px;
+    background: rgba(238, 238, 235, .92);
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 22px;
+    text-align: center;
+    padding: 24px;
+    pointer-events: none;
+  }
+  body.dragging .drop { display: flex; }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    z-index: 70;
+    transform: translate(-50%, 20px);
+    max-width: min(92vw, 520px);
+    padding: 11px 18px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #f4f4f1;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s, transform .2s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- Small screens ---------- */
+  @media (max-width: 560px) {
+    .top { padding: 16px 14px 8px; }
+    main { padding: 8px 14px 40px; }
+    .brand span { font-size: 21px; }
+    .shutter { width: 76px; height: 76px; }
+    .last-shot { width: 52px; height: 52px; }
+    .controls .btn .label { display: none; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+    .readout { left: 50px; top: 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="8" fill="#141517"/>
+      <path fill="#ff4f1f" d="M16 4c1.2 5.2 8 7.4 8 13.5a8 8 0 0 1-16 0c0-3 1.6-5.4 3.2-6.8.2 2.8 1.6 4.3 3.2 4.6C14.6 11.6 14 8 16 4z"/>
+    </svg>
+    <span>Ignitia</span>
+  </div>
+
+  <div class="top-actions">
+    <button class="btn" type="button" data-upload>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+      Upload
+    </button>
+    <div class="tabs" role="tablist" aria-label="Views">
+      <button class="tab" type="button" role="tab" id="tab-camera" aria-selected="true" aria-controls="view-camera">Camera</button>
+      <button class="tab" type="button" role="tab" id="tab-gallery" aria-selected="false" aria-controls="view-gallery" tabindex="-1">Gallery <span class="badge" id="count">0</span></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ================= CAMERA ================= -->
+  <section id="view-camera" role="tabpanel" aria-labelledby="tab-camera">
+    <div class="stage" id="stage">
+      <video id="video" autoplay playsinline muted></video>
+
+      <span class="bracket tl"></span><span class="bracket tr"></span>
+      <span class="bracket bl"></span><span class="bracket br"></span>
+      <div class="readout" id="readout" hidden></div>
+
+      <div class="placeholder" id="placeholder">
+        <p id="camMsg">Allow camera access to start taking photos.</p>
+        <button class="btn primary" type="button" id="startBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          Start camera
+        </button>
+      </div>
+
+      <div class="countdown" id="countdown" hidden aria-hidden="true"></div>
+      <div class="flash" id="flash"></div>
+    </div>
+
+    <div class="controls">
+      <div class="left">
+        <button class="last-shot" type="button" id="lastShot" aria-label="Open your latest photo" hidden>
+          <img id="lastShotImg" alt="">
+        </button>
+      </div>
+
+      <button class="shutter" type="button" id="shutter" aria-label="Take photo" disabled></button>
+
+      <div class="right">
+        <button class="btn" type="button" id="toggleBtn" aria-label="Start camera">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg>
+          <span class="label" id="toggleLabel">Start camera</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="options">
+      <label class="field" id="deviceField" hidden>
+        Camera
+        <select id="deviceSel"></select>
+      </label>
+      <label class="field">
+        Timer
+        <select id="timerSel">
+          <option value="0">Off</option>
+          <option value="3">3 seconds</option>
+          <option value="5">5 seconds</option>
+          <option value="10">10 seconds</option>
+        </select>
+      </label>
+      <label class="field check">
+        <input type="checkbox" id="mirrorChk">
+        Mirror image
+      </label>
+      <label class="field check">
+        <input type="checkbox" id="autoChk" checked>
+        Download each photo automatically
+      </label>
+      <p class="hint">Photos are saved as JPEG (.jpeg) to your device's downloads and kept in the gallery. If your browser asks about multiple downloads, choose Allow.</p>
+    </div>
+  </section>
+
+  <!-- ================= GALLERY ================= -->
+  <section id="view-gallery" role="tabpanel" aria-labelledby="tab-gallery" hidden>
+    <div class="gallery-head">
+      <h1>Gallery</h1>
+      <div class="actions">
+        <button class="btn primary" type="button" data-upload>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          Upload images
+        </button>
+        <button class="btn danger" type="button" id="clearBtn">Clear gallery</button>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="empty" id="empty">
+      <h2>No photos yet</h2>
+      <p>Take a photo with the camera, or add images from your device. You can also drag image files onto this page.</p>
+      <div class="row">
+        <button class="btn primary" type="button" data-upload>Upload images</button>
+        <button class="btn" type="button" id="goCamera">Open camera</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- ================= LIGHTBOX ================= -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" hidden>
+  <div class="lb-bar">
+    <div class="lb-meta">
+      <div class="lb-name" id="lbName"></div>
+      <div class="lb-sub" id="lbSub"></div>
+    </div>
+    <button class="btn" type="button" id="lbClose">Close</button>
+  </div>
+  <div class="lb-stage"><img id="lbImg" alt=""></div>
+  <div class="lb-foot">
+    <button class="btn" type="button" id="lbPrev" aria-label="Previous photo">Previous</button>
+    <button class="btn primary" type="button" id="lbDownload">Download</button>
+    <button class="btn danger" type="button" id="lbDelete">Delete</button>
+    <button class="btn" type="button" id="lbNext" aria-label="Next photo">Next</button>
+  </div>
+</div>
+
+<div class="drop" id="drop">Drop images to add them to your gallery</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------- Helpers ---------- */
+  const $ = (id) => document.getElementById(id);
+
+  const video = $('video');
+  const stage = $('stage');
+  const placeholder = $('placeholder');
+  const camMsg = $('camMsg');
+  const startBtn = $('startBtn');
+  const toggleBtn = $('toggleBtn');
+  const toggleLabel = $('toggleLabel');
+  const shutter = $('shutter');
+  const readout = $('readout');
+  const countdownEl = $('countdown');
+  const flashEl = $('flash');
+  const lastShot = $('lastShot');
+  const lastShotImg = $('lastShotImg');
+  const deviceField = $('deviceField');
+  const deviceSel = $('deviceSel');
+  const timerSel = $('timerSel');
+  const mirrorChk = $('mirrorChk');
+  const autoChk = $('autoChk');
+  const grid = $('grid');
+  const emptyEl = $('empty');
+  const countEl = $('count');
+  const fileInput = $('fileInput');
+  const toastEl = $('toast');
+  const lightbox = $('lightbox');
+  const lbImg = $('lbImg');
+
+  const DEFAULT_MSG = 'Allow camera access to start taking photos.';
+
+  let stream = null;
+  let starting = false;
+  let counting = false;
+  let countdownId = null;
+  let photos = [];          // newest first: {id, name, source, created, blob, url}
+  let db = null;
+  let currentIndex = -1;
+  let lastFocus = null;
+  let toastTimer = null;
+
+  const uid = () => Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+  const pad = (n, len = 2) => String(n).padStart(len, '0');
+
+  function stamp(d = new Date()) {
+    return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '-' +
+           pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds()) + '-' +
+           pad(d.getMilliseconds(), 3);
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function toast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2800);
+  }
+
+  /* ---------- Saved preferences (optional) ---------- */
+  const PREF_KEY = 'ignitia-prefs';
+  function loadPrefs() {
+    try {
+      const raw = localStorage.getItem(PREF_KEY);
+      if (!raw) return;
+      const p = JSON.parse(raw);
+      if (typeof p.mirror === 'boolean') mirrorChk.checked = p.mirror;
+      if (typeof p.auto === 'boolean') autoChk.checked = p.auto;
+      if (typeof p.timer === 'string' && [...timerSel.options].some(o => o.value === p.timer)) timerSel.value = p.timer;
+    } catch (_) { /* storage unavailable: ignore */ }
+    video.classList.toggle('mirrored', mirrorChk.checked);
+  }
+  function savePrefs() {
+    try {
+      localStorage.setItem(PREF_KEY, JSON.stringify({
+        mirror: mirrorChk.checked,
+        auto: autoChk.checked,
+        timer: timerSel.value
+      }));
+    } catch (_) { /* ignore */ }
+  }
+
+  /* ---------- IndexedDB (keeps the gallery between visits) ---------- */
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) { reject(new Error('IndexedDB unavailable')); return; }
+      let req;
+      try { req = indexedDB.open('ignitia-db', 1); } catch (e) { reject(e); return; }
+      req.onupgradeneeded = () => {
+        const d = req.result;
+        if (!d.objectStoreNames.contains('photos')) d.createObjectStore('photos', { keyPath: 'id' });
+      };
+      req.onsuccess = () => {
+        const d = req.result;
+        d.onversionchange = () => d.close();
+        resolve(d);
+      };
+      req.onerror = () => reject(req.error);
+      req.onblocked = () => reject(new Error('IndexedDB blocked'));
+    });
+  }
+
+  function dbRun(mode, fn) {
+    return new Promise((resolve) => {
+      if (!db) { resolve(false); return; }
+      try {
+        const tx = db.transaction('photos', mode);
+        fn(tx.objectStore('photos'));
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => resolve(false);
+        tx.onabort = () => resolve(false);
+      } catch (_) { resolve(false); }
+    });
+  }
+  const dbPut = (p) => dbRun('readwrite', (s) => s.put({
+    id: p.id, name: p.name, source: p.source, created: p.created, blob: p.blob
+  }));
+  const dbDelete = (id) => dbRun('readwrite', (s) => s.delete(id));
+  const dbClear = () => dbRun('readwrite', (s) => s.clear());
+  function dbAll() {
+    return new Promise((resolve) => {
+      if (!db) { resolve([]); return; }
+      try {
+        const req = db.transaction('photos', 'readonly').objectStore('photos').getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => resolve([]);
+      } catch (_) { resolve([]); }
+    });
+  }
+
+  /* ---------- Views ---------- */
+  const tabCamera = $('tab-camera');
+  const tabGallery = $('tab-gallery');
+  const viewCamera = $('view-camera');
+  const viewGallery = $('view-gallery');
+
+  function showView(name) {
+    const cam = name === 'camera';
+    viewCamera.hidden = !cam;
+    viewGallery.hidden = cam;
+    tabCamera.setAttribute('aria-selected', String(cam));
+    tabGallery.setAttribute('aria-selected', String(!cam));
+    tabCamera.tabIndex = cam ? 0 : -1;
+    tabGallery.tabIndex = cam ? -1 : 0;
+  }
+  tabCamera.addEventListener('click', () => showView('camera'));
+  tabGallery.addEventListener('click', () => showView('gallery'));
+  [tabCamera, tabGallery].forEach((tab) => {
+    tab.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const goGallery = tab === tabCamera;
+        showView(goGallery ? 'gallery' : 'camera');
+        (goGallery ? tabGallery : tabCamera).focus();
+        e.preventDefault();
+      }
+    });
+  });
+  $('goCamera').addEventListener('click', () => showView('camera'));
+
+  /* ---------- Camera ---------- */
+  function setLive(live) {
+    placeholder.hidden = live;
+    shutter.disabled = !live;
+    readout.hidden = !live;
+    toggleLabel.textContent = live ? 'Stop camera' : 'Start camera';
+    toggleBtn.setAttribute('aria-label', live ? 'Stop camera' : 'Start camera');
+    if (!live) {
+      stage.style.aspectRatio = '16 / 9';
+      readout.textContent = '';
+    }
+  }
+
+  function updateAspect() {
+    if (video.videoWidth && video.videoHeight) {
+      stage.style.aspectRatio = video.videoWidth + ' / ' + video.videoHeight;
+      readout.textContent = video.videoWidth + ' \u00d7 ' + video.videoHeight;
+    }
+  }
+  video.addEventListener('loadedmetadata', updateAspect);
+  video.addEventListener('resize', updateAspect);
+
+  function showCamMessage(text, isError) {
+    camMsg.textContent = text;
+    camMsg.classList.toggle('error', !!isError);
+  }
+
+  function errorText(err) {
+    const name = err && err.name;
+    if (name === 'NotAllowedError' || name === 'SecurityError') {
+      return 'Camera access was blocked. Allow the camera for this page in your browser settings, then choose Start camera.';
+    }
+    if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+      return 'No camera was found. Connect a webcam and choose Start camera.';
+    }
+    if (name === 'NotReadableError' || name === 'AbortError') {
+      return 'The camera is in use by another app. Close it and choose Start camera.';
+    }
+    return 'The camera could not be started. Reload the page and try again.';
+  }
+
+  function stopStream() {
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+  }
+
+  function stopCamera() {
+    cancelCountdown();
+    stopStream();
+    setLive(false);
+    showCamMessage(DEFAULT_MSG, false);
+  }
+
+  async function refreshDevices(track) {
+    try {
+      const devices = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+      deviceSel.innerHTML = '';
+      devices.forEach((d, i) => {
+        const o = document.createElement('option');
+        o.value = d.deviceId;
+        o.textContent = d.label || ('Camera ' + (i + 1));
+        deviceSel.appendChild(o);
+      });
+      const current = track && track.getSettings ? track.getSettings().deviceId : null;
+      if (current) deviceSel.value = current;
+      deviceField.hidden = devices.length < 2;
+    } catch (_) {
+      deviceField.hidden = true;
+    }
+  }
+
+  async function startCamera(deviceId) {
+    if (starting) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showCamMessage('This browser cannot access a camera on this page. Open the page in a current browser over HTTPS or from localhost.', true);
+      return;
+    }
+    starting = true;
+    startBtn.disabled = true;
+    toggleBtn.disabled = true;
+    showCamMessage('Waiting for camera permission\u2026', false);
+    cancelCountdown();
+    stopStream();
+
+    const base = { width: { ideal: 1920 }, height: { ideal: 1080 } };
+    try {
+      let s;
+      try {
+        s = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: deviceId ? Object.assign({ deviceId: { exact: deviceId } }, base) : base
+        });
+      } catch (err) {
+        if (deviceId && (err.name === 'OverconstrainedError' || err.name === 'NotFoundError')) {
+          s = await navigator.mediaDevices.getUserMedia({ audio: false, video: base });
+        } else {
+          throw err;
+        }
+      }
+
+      stream = s;
+      video.srcObject = s;
+      const track = s.getVideoTracks()[0];
+      track.addEventListener('ended', () => {
+        if (stream === s) {
+          stopCamera();
+          toast('The camera was disconnected');
+        }
+      });
+      try { await video.play(); } catch (_) { /* autoplay is already requested */ }
+      setLive(true);
+      updateAspect();
+      await refreshDevices(track);
+    } catch (err) {
+      setLive(false);
+      showCamMessage(errorText(err), true);
+    } finally {
+      starting = false;
+      startBtn.disabled = false;
+      toggleBtn.disabled = false;
+    }
+  }
+
+  startBtn.addEventListener('click', () => startCamera(deviceSel.value || undefined));
+  toggleBtn.addEventListener('click', () => {
+    if (stream) stopCamera();
+    else startCamera(deviceSel.value || undefined);
+  });
+  deviceSel.addEventListener('change', () => startCamera(deviceSel.value || undefined));
+
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener('devicechange', () => {
+      if (stream) refreshDevices(stream.getVideoTracks()[0]);
+    });
+  }
+
+  mirrorChk.addEventListener('change', () => {
+    video.classList.toggle('mirrored', mirrorChk.checked);
+    savePrefs();
+  });
+  autoChk.addEventListener('change', savePrefs);
+  timerSel.addEventListener('change', savePrefs);
+
+  /* ---------- Capture ---------- */
+  function canvasToJpeg(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('JPEG encoding failed'))), 'image/jpeg', 0.92);
+    });
+  }
+
+  function downloadBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, 2000);
+  }
+
+  function fireFlash() {
+    flashEl.classList.remove('fire');
+    void flashEl.offsetWidth;
+    flashEl.classList.add('fire');
+  }
+
+  async function takePhoto() {
+    if (!stream || !video.videoWidth || !video.videoHeight) {
+      toast('Start the camera first');
+      return;
+    }
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (mirrorChk.checked) {
+      ctx.translate(w, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(video, 0, 0, w, h);
+    fireFlash();
+
+    try {
+      const blob = await canvasToJpeg(canvas);
+      const name = 'Ignitia-' + stamp() + '.jpeg';
+      addPhoto({ blob, name, source: 'camera' });
+      refresh();
+      if (autoChk.checked) {
+        downloadBlob(blob, name);
+        toast('Photo saved to your downloads and added to the gallery');
+      } else {
+        toast('Photo added to the gallery');
+      }
+    } catch (_) {
+      toast('The photo could not be saved. Try again.');
+    }
+  }
+
+  function showCount(n) {
+    countdownEl.textContent = String(n);
+    countdownEl.hidden = false;
+    countdownEl.classList.remove('pop');
+    void countdownEl.offsetWidth;
+    countdownEl.classList.add('pop');
+  }
+
+  function cancelCountdown() {
+    if (countdownId !== null) {
+      clearInterval(countdownId);
+      countdownId = null;
+    }
+    counting = false;
+    countdownEl.hidden = true;
+    shutter.classList.remove('counting');
+    shutter.setAttribute('aria-label', 'Take photo');
+  }
+
+  function onShutter() {
+    if (counting) {
+      cancelCountdown();
+      toast('Timer cancelled');
+      return;
+    }
+    const secs = parseInt(timerSel.value, 10) || 0;
+    if (!secs) {
+      takePhoto();
+      return;
+    }
+    counting = true;
+    shutter.classList.add('counting');
+    shutter.setAttribute('aria-label', 'Cancel timer');
+    let n = secs;
+    showCount(n);
+    countdownId = setInterval(() => {
+      n -= 1;
+      if (n > 0) {
+        showCount(n);
+      } else {
+        cancelCountdown();
+        takePhoto();
+      }
+    }, 1000);
+  }
+  shutter.addEventListener('click', onShutter);
+
+  /* ---------- Gallery data ---------- */
+  function addPhoto({ blob, name, source }) {
+    const p = {
+      id: uid(),
+      name,
+      source,
+      created: Date.now(),
+      blob,
+      url: URL.createObjectURL(blob)
+    };
+    photos.unshift(p);
+    dbPut(p);
+    return p;
+  }
+
+  function removePhoto(index) {
+    const removed = photos.splice(index, 1)[0];
+    if (!removed) return;
+    URL.revokeObjectURL(removed.url);
+    dbDelete(removed.id);
+    refresh();
+  }
+
+  function refresh() {
+    renderGallery();
+    countEl.textContent = String(photos.length);
+    if (photos.length) {
+      lastShotImg.src = photos[0].url;
+      lastShot.hidden = false;
+    } else {
+      lastShotImg.removeAttribute('src');
+      lastShot.hidden = true;
+    }
+  }
+
+  function renderGallery() {
+    grid.innerHTML = '';
+    const has = photos.length > 0;
+    grid.hidden = !has;
+    emptyEl.hidden = has;
+    $('clearBtn').disabled = !has;
+
+    const frag = document.createDocumentFragment();
+    photos.forEach((p, i) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'thumb';
+      btn.setAttribute('aria-label', 'Open ' + p.name);
+
+      const img = document.createElement('img');
+      img.alt = p.name;
+      img.decoding = 'async';
+      img.src = p.url;
+      img.addEventListener('error', () => {
+        btn.classList.add('broken');
+        img.remove();
+        const msg = document.createElement('span');
+        msg.textContent = 'Preview unavailable';
+        btn.appendChild(msg);
+      });
+      btn.appendChild(img);
+
+      if (p.source === 'upload') {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = 'Uploaded';
+        btn.appendChild(tag);
+      }
+
+      btn.addEventListener('click', () => openLightbox(i));
+      frag.appendChild(btn);
+    });
+    grid.appendChild(frag);
+  }
+
+  lastShot.addEventListener('click', () => {
+    if (photos.length) openLightbox(0);
+  });
+
+  $('clearBtn').addEventListener('click', () => {
+    if (!photos.length) return;
+    if (!confirm('Delete all ' + photos.length + ' photos from the gallery? Files already downloaded to your device are not affected.')) return;
+    photos.forEach((p) => URL.revokeObjectURL(p.url));
+    photos = [];
+    dbClear();
+    closeLightbox();
+    refresh();
+    toast('Gallery cleared');
+  });
+
+  /* ---------- Uploads ---------- */
+  document.querySelectorAll('[data-upload]').forEach((b) => {
+    b.addEventListener('click', () => fileInput.click());
+  });
+
+  function handleFiles(fileList) {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    const images = files.filter((f) => f.type && f.type.startsWith('image/'));
+    const skipped = files.length - images.length;
+
+    // Add in reverse so the first selected file appears first in the gallery.
+    for (let i = images.length - 1; i >= 0; i--) {
+      addPhoto({ blob: images[i], name: images[i].name || ('Upload-' + stamp() + '.jpeg'), source: 'upload' });
+    }
+    if (images.length) {
+      refresh();
+      showView('gallery');
+    }
+
+    if (images.length && skipped) {
+      toast('Added ' + images.length + (images.length === 1 ? ' image' : ' images') + '. ' + skipped + ' not an image, skipped.');
+    } else if (images.length) {
+      toast('Added ' + images.length + (images.length === 1 ? ' image' : ' images') + ' to the gallery');
+    } else {
+      toast('Only image files can be added to the gallery');
+    }
+  }
+
+  fileInput.addEventListener('change', () => {
+    handleFiles(fileInput.files);
+    fileInput.value = '';
+  });
+
+  // Drag and drop anywhere on the page
+  let dragDepth = 0;
+  const hasFiles = (e) => e.dataTransfer && Array.from(e.dataTransfer.types || []).indexOf('Files') !== -1;
+  window.addEventListener('dragenter', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth += 1;
+    document.body.classList.add('dragging');
+  });
+  window.addEventListener('dragover', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+  });
+  window.addEventListener('dragleave', (e) => {
+    if (!hasFiles(e)) return;
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) document.body.classList.remove('dragging');
+  });
+  window.addEventListener('drop', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth = 0;
+    document.body.classList.remove('dragging');
+    handleFiles(e.dataTransfer.files);
+  });
+
+  /* ---------- Lightbox ---------- */
+  function renderLightbox() {
+    const p = photos[currentIndex];
+    if (!p) return;
+    lbImg.src = p.url;
+    lbImg.alt = p.name;
+    $('lbName').textContent = p.name;
+    $('lbSub').textContent = (p.source === 'upload' ? 'Uploaded ' : 'Captured ') +
+      new Date(p.created).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) +
+      ', ' + formatSize(p.blob.size) + ', photo ' + (currentIndex + 1) + ' of ' + photos.length;
+    $('lbPrev').disabled = currentIndex <= 0;
+    $('lbNext').disabled = currentIndex >= photos.length - 1;
+  }
+
+  function openLightbox(index) {
+    if (!photos[index]) return;
+    currentIndex = index;
+    lastFocus = document.activeElement;
+    lightbox.hidden = false;
+    document.body.style.overflow = 'hidden';
+    renderLightbox();
+    $('lbClose').focus();
+  }
+
+  function closeLightbox() {
+    if (lightbox.hidden) return;
+    lightbox.hidden = true;
+    lbImg.removeAttribute('src');
+    document.body.style.overflow = '';
+    currentIndex = -1;
+    if (lastFocus && document.contains(lastFocus) && !lastFocus.hidden) {
+      try { lastFocus.focus(); } catch (_) { /* ignore */ }
+    }
+  }
+
+  function step(delta) {
+    const next = currentIndex + delta;
+    if (next < 0 || next >= photos.length) return;
+    currentIndex = next;
+    renderLightbox();
+  }
+
+  lbImg.addEventListener('error', () => toast('This image cannot be previewed in your browser'));
+  $('lbClose').addEventListener('click', closeLightbox);
+  $('lbPrev').addEventListener('click', () => step(-1));
+  $('lbNext').addEventListener('click', () => step(1));
+  $('lbDownload').addEventListener('click', () => {
+    const p = photos[currentIndex];
+    if (p) downloadBlob(p.blob, p.name);
+  });
+  $('lbDelete').addEventListener('click', () => {
+    const p = photos[currentIndex];
+    if (!p) return;
+    if (!confirm('Delete this photo from the gallery?')) return;
+    removePhoto(currentIndex);
+    if (!photos.length) {
+      closeLightbox();
+    } else {
+      currentIndex = Math.min(currentIndex, photos.length - 1);
+      renderLightbox();
+    }
+    toast('Photo deleted');
+  });
+
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox || e.target.classList.contains('lb-stage')) closeLightbox();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (lightbox.hidden) return;
+    if (e.key === 'Escape') { closeLightbox(); }
+    else if (e.key === 'ArrowLeft') { step(-1); }
+    else if (e.key === 'ArrowRight') { step(1); }
+    else if (e.key === 'Tab') {
+      const focusable = Array.from(lightbox.querySelectorAll('button:not([disabled])'));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+    }
+  });
+
+  window.addEventListener('pagehide', () => { stopStream(); });
+
+  /* ---------- Init ---------- */
+  async function init() {
+    loadPrefs();
+    setLive(false);
+    refresh();
+
+    try {
+      db = await openDB();
+    } catch (_) {
+      db = null;
+      toast('This browser cannot keep the gallery between visits');
+    }
+
+    const rows = await dbAll();
+    const loaded = rows
+      .filter((r) => r && r.blob)
+      .sort((a, b) => b.created - a.created)
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        source: r.source,
+        created: r.created,
+        blob: r.blob,
+        url: URL.createObjectURL(r.blob)
+      }));
+
+    // Keep anything added while the gallery was loading.
+    const seen = new Set(photos.map((p) => p.id));
+    loaded.forEach((p) => { if (seen.has(p.id)) URL.revokeObjectURL(p.url); });
+    photos = photos.concat(loaded.filter((p) => !seen.has(p.id)))
+                   .sort((a, b) => b.created - a.created);
+    refresh();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
