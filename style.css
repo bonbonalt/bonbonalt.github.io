@@ -1,5 +1,5 @@
 body {
-  background-image: linear-gradient(to right, #ff7e5f, #feb47b);
+  background-image: linear-gradient(to right, blue, green);
 }
 header {
   font-family: arial;
