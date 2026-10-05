@@ -1,4 +1,7 @@
-#title {
+body {
+  background-image: linear-gradient(to right, #ff7e5f, #feb47b);
+}
+header {
   font-family: arial;
   color: #0b7eb8;
   bottom-border: 3px solid black;
