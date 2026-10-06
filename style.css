@@ -1,10 +1,10 @@
 body {
-  background-color: grey;
+  background-color: #CCCCCC;
 }
 header {
   font-family: arial;
   color: #0b7eb8;
-  bottom-border: 3px solid black;
+  border: 3px solid black;
 }
 
 
