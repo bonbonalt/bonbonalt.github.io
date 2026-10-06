@@ -4,7 +4,9 @@ body {
 header {
   font-family: arial;
   color: #0b7eb8;
-  border: 3px solid black;
+  font-size: 43px;  
+  line-spacing: 1;
+  border-bottom: 12px solid #00000F;
 }
 
 
