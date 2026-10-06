@@ -8,6 +8,10 @@ header {
   line-spacing: 1;
   border-bottom: 12px solid #00000F;
 }
+.highlight {
+ background: yellow;
+ font-weight: bold;
+}
 
 
 
